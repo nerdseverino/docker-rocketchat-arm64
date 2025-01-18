@@ -36,7 +36,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-ENV RC_VERSION=7.2.0
+ENV RC_VERSION=7.2.1
+ENV SHARP_VERSION=0.33.5
 
 RUN set -eux \
   && apt-get update \
@@ -54,7 +55,7 @@ RUN set -eux \
   && cd bundle/programs/server \
   && npm install --unsafe-perm=true \
   && rm -rf npm/node_modules/sharp \
-  && npm install --cpu=arm64 --os=linux sharp@0.33.5 \
+  && npm install --cpu=arm64 --os=linux sharp@${SHARP_VERSION} \
   && mv node_modules/sharp npm/node_modules/sharp \
   && apt-mark auto '.*' > /dev/null \
   && apt-mark manual $aptMark > /dev/null \
