@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 ARG ARCH=aarch64
 
@@ -36,8 +36,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-ENV RC_VERSION=7.2.1
-ENV SHARP_VERSION=0.33.5
+ENV RC_VERSION=develop
+# ENV SHARP_VERSION=0.33.5
 
 RUN set -eux \
   && apt-get update \
@@ -55,7 +55,8 @@ RUN set -eux \
   && cd bundle/programs/server \
   && npm install --unsafe-perm=true \
   && rm -rf npm/node_modules/sharp \
-  && npm install --cpu=arm64 --os=linux sharp@${SHARP_VERSION} \
+# && npm install --cpu=arm64 --os=linux sharp@${SHARP_VERSION} \
+  && npm install --cpu=arm64 --os=linux sharp \
   && mv node_modules/sharp npm/node_modules/sharp \
   && apt-mark auto '.*' > /dev/null \
   && apt-mark manual $aptMark > /dev/null \
