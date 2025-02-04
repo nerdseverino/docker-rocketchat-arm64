@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 ARG ARCH=aarch64
 
@@ -36,7 +36,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-ENV RC_VERSION=7.2.1
+ENV RC_VERSION=7.3.0
 ENV SHARP_VERSION=0.33.5
 
 RUN set -eux \
