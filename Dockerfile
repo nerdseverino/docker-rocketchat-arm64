@@ -70,6 +70,9 @@ RUN set -eux \
   && npm cache clear --force \
   && chown -R rocketchat:rocketchat /app
 
+# Fix DEBUG_DISABLE_USER_AUDIT deprecation error
+RUN sed -i '/DEBUG_DISABLE_USER_AUDIT.*deprecated/,+2d' /app/bundle/app/lib/server/functions/saveUser/saveUser.js || true
+
 USER rocketchat
 
 WORKDIR /app/bundle
