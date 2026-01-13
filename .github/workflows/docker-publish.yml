@@ -57,8 +57,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value={{branch}}
+            type=raw,value=RC.8.0.0-arm64
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
