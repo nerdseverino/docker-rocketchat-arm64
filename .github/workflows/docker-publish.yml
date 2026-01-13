@@ -1,31 +1,25 @@
 name: Docker Publish
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 on:
   workflow_dispatch:
   push:
     branches:
       - '8.*'
+      - 'main'
+  schedule:
+    # Check for updates weekly on Mondays at 2 AM UTC
+    - cron: '0 2 * * 1'
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
-  # github.repository as <account>/<repo>
   IMAGE_NAME: systemcrashpoa/nerdseverino
 
 jobs:
   build:
-
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
     steps:
@@ -35,12 +29,9 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # Workaround: https://github.com/docker/build-push-action/issues/461
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
 
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
@@ -49,18 +40,36 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      # Extract metadata (tags, labels) for Docker
-      # https://github.com/docker/metadata-action
+      - name: Extract version from branch/Dockerfile
+        id: version
+        run: |
+          if [[ "${{ github.ref_name }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION="${{ github.ref_name }}"
+            TAG="RC.${VERSION}-arm64"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            VERSION=$(grep "ENV RC_VERSION=" Dockerfile | cut -d'=' -f2)
+            TAG="RC.${VERSION}-arm64"
+          else
+            VERSION="dev"
+            TAG="dev-arm64"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION} with tag: ${TAG}"
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=RC.8.0.1-arm64
+            type=raw,value=${{ steps.version.outputs.tag }}
+          labels: |
+            org.opencontainers.image.title=Rocket.Chat ARM64
+            org.opencontainers.image.description=Rocket.Chat optimized for ARM64/AArch64
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.vendor=systemcrashpoa
 
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v6
@@ -70,3 +79,29 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDTIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VERSION=${{ steps.version.outputs.version }}
+
+      - name: Update Docker Hub description
+        if: github.event_name != 'pull_request' && github.ref_name != 'dev'
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          repository: ${{ env.IMAGE_NAME }}
+          readme-filepath: ./README.md
+
+      - name: Generate build summary
+        if: always()
+        run: |
+          echo "## 🚀 Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.build-and-push.outcome }}" == "success" ]]; then
+            echo "- **Image**: \`docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
