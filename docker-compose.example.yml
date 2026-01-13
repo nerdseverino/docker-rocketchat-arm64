@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  rocketchat:
+    image: systemcrashpoa/nerdseverino:RC.8.0.1-arm64
+    restart: unless-stopped
+    environment:
+      - ROOT_URL=http://localhost:3000
+      - MONGO_URL=mongodb://mongo:27017/rocketchat?replicaSet=rs0&directConnection=true
+      - MONGO_OPLOG_URL=mongodb://mongo:27017/local?replicaSet=rs0&directConnection=true
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      - mongo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: mongod --replSet rs0 --oplogSize 128 --noprealloc --smallfiles
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mongo-init-replica:
+    image: mongo:7
+    command: >
+      mongosh --host mongo:27017 --eval "
+        var config = {
+          '_id': 'rs0',
+          'version': 1,
+          'members': [
+            {
+              '_id': 1,
+              'host': 'mongo:27017',
+              'priority': 1
+            }
+          ]
+        };
+        rs.initiate(config, { force: true });
+        rs.status();
+      "
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:
+  mongo_config:
+  uploads:
