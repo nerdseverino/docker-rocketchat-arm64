@@ -1,0 +1,36 @@
+# Sensitive files
+contexto.json
+*.env
+.env*
+
+# Docker secrets
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Build artifacts
+*.tar.gz
+*.tgz
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node modules (if any)
+node_modules/
+
+# Backup files
+*.backup
+*.bak
+*~
