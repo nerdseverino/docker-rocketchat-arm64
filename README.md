@@ -13,7 +13,6 @@ Docker images for Rocket.Chat optimized for ARM64/AArch64 architecture.
 
 ```bash
 # Create docker-compose.yml
-version: '3.8'
 services:
   rocketchat:
     image: systemcrashpoa/nerdseverino:RC.8.0.1-arm64

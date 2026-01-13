@@ -1,6 +1,4 @@
-   version: '3.8'
-
-services:
+   services:
   rocketchat:
     image: caseykelso/docker-rocketchat-arm64:7.12.2
     container_name: rocketchat
