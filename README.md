@@ -6,7 +6,8 @@ Docker images for Rocket.Chat optimized for ARM64/AArch64 architecture.
 
 | Version | Tag | Status |
 |---------|-----|--------|
-| 8.0.1 | `systemcrashpoa/nerdseverino:RC.8.0.1-arm64` | ✅ Latest |
+| 8.1.0 | `systemcrashpoa/nerdseverino:RC.8.1.0-arm64` | ✅ Latest |
+| 8.0.1 | `systemcrashpoa/nerdseverino:RC.8.0.1-arm64` | ⚠️ Deprecated |
 | 8.0.0 | `systemcrashpoa/nerdseverino:RC.8.0.0-arm64` | ⚠️ Deprecated |
 
 ## 🚀 Quick Start
@@ -15,7 +16,7 @@ Docker images for Rocket.Chat optimized for ARM64/AArch64 architecture.
 # Create docker-compose.yml
 services:
   rocketchat:
-    image: systemcrashpoa/nerdseverino:RC.8.0.1-arm64
+    image: systemcrashpoa/nerdseverino:RC.8.1.0-arm64
     restart: unless-stopped
     environment:
       - ROOT_URL=http://localhost:3000
