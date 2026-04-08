@@ -1,0 +1,84 @@
+name: Check New Rocket.Chat Release
+
+on:
+  schedule:
+    # Check daily at 8 AM UTC (5 AM BRT)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get current version from Dockerfile
+        id: current
+        run: |
+          CURRENT=$(grep "ENV RC_VERSION=" Dockerfile | cut -d'=' -f2)
+          echo "version=${CURRENT}" >> $GITHUB_OUTPUT
+          echo "Current version: ${CURRENT}"
+
+      - name: Get latest Rocket.Chat release
+        id: latest
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/RocketChat/Rocket.Chat/releases/latest | jq -r '.tag_name')
+          echo "version=${LATEST}" >> $GITHUB_OUTPUT
+          echo "Latest version: ${LATEST}"
+
+      - name: Compare versions
+        id: compare
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          LATEST="${{ steps.latest.outputs.version }}"
+          if [ "${CURRENT}" != "${LATEST}" ]; then
+            echo "new_release=true" >> $GITHUB_OUTPUT
+            echo "🚀 New version available: ${LATEST} (current: ${CURRENT})"
+          else
+            echo "new_release=false" >> $GITHUB_OUTPUT
+            echo "✅ Already up to date: ${CURRENT}"
+          fi
+
+      - name: Create issue for new release
+        if: steps.compare.outputs.new_release == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const current = '${{ steps.current.outputs.version }}';
+            const latest = '${{ steps.latest.outputs.version }}';
+            const title = `🚀 New Rocket.Chat release: ${latest}`;
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'new-release'
+            });
+            const exists = issues.data.some(i => i.title.includes(latest));
+            if (exists) {
+              console.log('Issue already exists, skipping');
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: `## New Rocket.Chat Release Detected\n\n` +
+                    `- **Current version**: ${current}\n` +
+                    `- **New version**: ${latest}\n` +
+                    `- **Release page**: https://github.com/RocketChat/Rocket.Chat/releases/tag/${latest}\n\n` +
+                    `### How to update\n\n` +
+                    `\`\`\`bash\n./scripts/new-version.sh ${latest}\ngit push origin ${latest}\n\`\`\`\n`,
+              labels: ['new-release']
+            });
+
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## 🔍 Release Check" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current**: ${{ steps.current.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest**: ${{ steps.latest.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **New release**: ${{ steps.compare.outputs.new_release }}" >> $GITHUB_STEP_SUMMARY
