@@ -34,3 +34,4 @@ node_modules/
 *.backup
 *.bak
 *~
+update_mongo.json
