@@ -57,6 +57,7 @@ RUN set -eux \
   && rm -rf npm/node_modules/sharp \
   && npm install --cpu=arm64 --os=linux sharp@${SHARP_VERSION} \
   && mv node_modules/sharp npm/node_modules/sharp \
+  && ln -sf /app/bundle/programs/server/npm/node_modules/sharp /node_modules/sharp \
   && apt-mark auto '.*' > /dev/null \
   && apt-mark manual $aptMark > /dev/null \
   && find /usr/local -type f -executable -exec ldd '{}' ';' \
