@@ -37,7 +37,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 ENV RC_VERSION=8.7.0
-ENV SHARP_VERSION=^0.33.5
+ENV SHARP_VERSION=0.34.2
 
 RUN set -eux \
   && apt-get update \
@@ -54,6 +54,8 @@ RUN set -eux \
   && rm rocket.chat.tgz rocket.chat.tgz.asc \
   && cd bundle/programs/server \
   && npm install --unsafe-perm=true \
+  && cd / && npm install --cpu=arm64 --os=linux sharp@${SHARP_VERSION} \
+  && cd /app/bundle/programs/server \
   && apt-mark auto '.*' > /dev/null \
   && apt-mark manual $aptMark > /dev/null \
   && find /usr/local -type f -executable -exec ldd '{}' ';' \
