@@ -54,7 +54,7 @@ RUN set -eux \
   && rm rocket.chat.tgz rocket.chat.tgz.asc \
   && cd bundle/programs/server \
   && npm install --unsafe-perm=true \
-  && cd / && npm install --cpu=arm64 --os=linux sharp@${SHARP_VERSION} \
+  && cd / && echo '{}' > package.json && npm install --cpu=arm64 --os=linux sharp@${SHARP_VERSION} \
   && cd /app/bundle/programs/server \
   && apt-mark auto '.*' > /dev/null \
   && apt-mark manual $aptMark > /dev/null \
