@@ -26,7 +26,10 @@ RUN set -eux \
   && apt-get install -y --no-install-recommends g++ make python3 ca-certificates curl gnupg \
   && rm -rf /var/lib/apt/lists/* \
   # gpg: key 4FD08104: public key "Rocket.Chat Buildmaster <buildmaster@rocket.chat>" imported
-  && gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 0E163286C20D07B9787EBE9FD7F9D0414FD08104 \
+  && for i in 1 2 3; do for ks in keyserver.ubuntu.com hkps://keys.openpgp.org pgp.mit.edu; do \
+       gpg --batch --keyserver "$ks" --recv-keys 0E163286C20D07B9787EBE9FD7F9D0414FD08104 && break 2; \
+       sleep 5; done; done \
+  && gpg --batch --list-keys 0E163286C20D07B9787EBE9FD7F9D0414FD08104 > /dev/null \
   && curl -fSL "https://releases.rocket.chat/${RC_VERSION}/download" -o rocket.chat.tgz \
   && curl -fSL "https://releases.rocket.chat/${RC_VERSION}/asc" -o rocket.chat.tgz.asc \
   && gpg --batch --verify rocket.chat.tgz.asc rocket.chat.tgz \
