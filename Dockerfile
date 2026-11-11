@@ -17,7 +17,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 ENV RC_VERSION=9.0.0
-ENV SHARP_VERSION=0.35.0
+ENV SHARP_VERSION=0.35.5
 
 RUN set -eux \
   && apt-get update \
