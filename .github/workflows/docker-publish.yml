@@ -48,7 +48,7 @@ jobs:
             VERSION="${{ github.ref_name }}"
             TAG="RC.${VERSION}-arm64"
           elif [[ "${{ github.ref_name }}" == "main" ]]; then
-            VERSION=$(grep "ENV RC_VERSION=" Dockerfile | cut -d'=' -f2)
+            VERSION=$(grep -m1 "^ARG RC_VERSION=" Dockerfile | cut -d'=' -f2)
             TAG="RC.${VERSION}-arm64"
           else
             VERSION="dev"

@@ -20,7 +20,7 @@ echo "🔄 Creating new version ${VERSION}..."
 
 git checkout -b "${VERSION}"
 
-sed -i "s/ENV RC_VERSION=.*/ENV RC_VERSION=${VERSION}/" Dockerfile
+sed -i "s/^ARG RC_VERSION=.*/ARG RC_VERSION=${VERSION}/" Dockerfile
 sed -i "s/RC\.[0-9]\+\.[0-9]\+\.[0-9]\+-arm64/RC.${VERSION}-arm64/g" README.md
 
 git add .
